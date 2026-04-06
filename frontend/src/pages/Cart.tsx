@@ -4,8 +4,10 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, ShoppingBag, CreditCard, Banknote, Wallet, ArrowLeft } from "lucide-react";
+import { Trash2, ShoppingBag, CreditCard, ArrowLeft, Wallet, Banknote } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Navbar } from "@/components/layout/Navbar";
+import PaymentButtons from "@/components/payment/PaymentButtons";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const KHALTI_PUBLIC = import.meta.env.VITE_KHALTI_PUBLIC_KEY || "";
@@ -16,7 +18,6 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // load Khalti script if public key provided
     if (KHALTI_PUBLIC) {
       const id = "khalti-js";
       if (!document.getElementById(id)) {
@@ -28,6 +29,26 @@ export default function CartPage() {
       }
     }
   }, []);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full border-0 shadow-lg">
+            <div className="p-12 text-center space-y-6">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto opacity-50" />
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Sign In to Checkout</h2>
+                <p className="text-muted-foreground">Please sign in to complete your purchase</p>
+              </div>
+              <Button size="lg" onClick={() => navigate("/login")} className="w-full">Sign In</Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const checkoutCOD = async () => {
     if (!isAuthenticated) return alert("Please login to place order");
@@ -143,6 +164,26 @@ export default function CartPage() {
     const khalti = new window.KhaltiCheckout(config);
     khalti.show({ amount });
   };
+
+  if (cart.items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950 flex flex-col">
+        <Navbar />
+        <div className="flex-1 flex items-center justify-center px-4">
+          <Card className="max-w-md w-full border-0 shadow-lg">
+            <div className="p-12 text-center space-y-6">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto opacity-50" />
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">Your Cart is Empty</h2>
+                <p className="text-muted-foreground">Add some items to get started shopping</p>
+              </div>
+              <Button size="lg" onClick={() => navigate("/search")} className="w-full">Continue Shopping</Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="max-w-5xl mx-auto p-4 md:p-6">

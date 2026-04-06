@@ -58,43 +58,49 @@ export const TopUsers = ({ sellers, buyers }: TopUsersProps) => {
               whileInView="show"
               viewport={{ once: true }}
             >
-              {sellers.map((user, index) => (
-                <motion.div
-                  key={user._id}
-                  variants={itemVariants}
-                >
-                  <Link 
-                    to={`/profile/${user._id}`} 
-                    className="flex items-center gap-3 group p-3 rounded-xl transition-all duration-300 hover:bg-accent hover:shadow-md border border-transparent hover:border-primary/50"
+              {sellers && sellers.length > 0 ? (
+                sellers.map((user, index) => (
+                  <motion.div
+                    key={user._id}
+                    variants={itemVariants}
                   >
-                    <motion.span 
-                      className="w-6 text-center font-bold text-muted-foreground group-hover:text-foreground transition-colors"
-                      whileHover={{ scale: 1.2 }}
+                    <Link 
+                      to={`/profile/${user._id}`} 
+                      className="flex items-center gap-3 group p-3 rounded-xl transition-all duration-300 hover:bg-accent hover:shadow-md border border-transparent hover:border-primary/50"
                     >
-                      {index + 1}
-                    </motion.span>
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-primary/50 transition-colors ring-2 ring-primary/10 group-hover:ring-primary/30">
-                        <AvatarImage 
-                          src={user.avatar?.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`} 
-                          alt={user.name} 
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                          {user.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </motion.div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground transition-colors">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.totalSales} items sold</p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                      <motion.span 
+                        className="w-6 text-center font-bold text-muted-foreground group-hover:text-foreground transition-colors"
+                        whileHover={{ scale: 1.2 }}
+                      >
+                        {index + 1}
+                      </motion.span>
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-primary/50 transition-colors ring-2 ring-primary/10 group-hover:ring-primary/30">
+                          <AvatarImage 
+                            src={user.avatar?.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`} 
+                            alt={user.name} 
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                            {user.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </motion.div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground transition-colors">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.totalSales} items sold</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-muted-foreground">
+                  <p>No top sellers yet</p>
+                </div>
+              )}
             </motion.div>
           </CardContent>
         </Card>
@@ -128,43 +134,49 @@ export const TopUsers = ({ sellers, buyers }: TopUsersProps) => {
               whileInView="show"
               viewport={{ once: true }}
             >
-              {buyers.map((user, index) => (
-                <motion.div
-                  key={user._id}
-                  variants={itemVariants}
-                >
-                  <Link 
-                    to={`/profile/${user._id}`} 
-                    className="flex items-center gap-3 group p-3 rounded-xl transition-all duration-300 hover:bg-accent hover:shadow-md border border-transparent hover:border-accent/50"
+              {buyers && buyers.length > 0 ? (
+                buyers.map((user, index) => (
+                  <motion.div
+                    key={user._id}
+                    variants={itemVariants}
                   >
-                    <motion.span 
-                      className="w-6 text-center font-bold text-muted-foreground group-hover:text-foreground transition-colors"
-                      whileHover={{ scale: 1.2 }}
+                    <Link 
+                      to={`/profile/${user._id}`} 
+                      className="flex items-center gap-3 group p-3 rounded-xl transition-all duration-300 hover:bg-accent hover:shadow-md border border-transparent hover:border-accent/50"
                     >
-                      {index + 1}
-                    </motion.span>
-                    <motion.div
-                      whileHover={{ scale: 1.1 }}
-                      transition={{ type: "spring", stiffness: 300 }}
-                    >
-                      <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-accent/50 transition-colors ring-2 ring-accent/10 group-hover:ring-accent/30">
-                        <AvatarImage 
-                          src={user.avatar?.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`} 
-                          alt={user.name} 
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
-                          {user.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </motion.div>
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground transition-colors">{user.name}</p>
-                      <p className="text-sm text-muted-foreground">{user.totalPurchases} items bought</p>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
+                      <motion.span 
+                        className="w-6 text-center font-bold text-muted-foreground group-hover:text-foreground transition-colors"
+                        whileHover={{ scale: 1.2 }}
+                      >
+                        {index + 1}
+                      </motion.span>
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        transition={{ type: "spring", stiffness: 300 }}
+                      >
+                        <Avatar className="h-10 w-10 border-2 border-background shadow-sm group-hover:border-accent/50 transition-colors ring-2 ring-accent/10 group-hover:ring-accent/30">
+                          <AvatarImage 
+                            src={user.avatar?.startsWith("http") ? user.avatar : `${API_URL}${user.avatar}`} 
+                            alt={user.name} 
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="bg-accent/10 text-accent group-hover:bg-accent group-hover:text-accent-foreground transition-colors">
+                            {user.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </motion.div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground transition-colors">{user.name}</p>
+                        <p className="text-sm text-muted-foreground">{user.totalPurchases} items bought</p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="py-8 text-center text-muted-foreground">
+                  <p>No top buyers yet</p>
+                </div>
+              )}
             </motion.div>
           </CardContent>
         </Card>

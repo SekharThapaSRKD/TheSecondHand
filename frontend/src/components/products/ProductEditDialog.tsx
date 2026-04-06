@@ -30,6 +30,122 @@ interface ProductEditDialogProps {
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+// Valid color list
+const VALID_COLORS = [
+  "Black", "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple",
+  "Pink", "Brown", "Gray", "Grey", "Beige", "Navy", "Turquoise", "Cyan",
+  "Magenta", "Lime", "Olive", "Maroon", "Teal", "Indigo", "Violet", "Gold",
+  "Silver", "Coral", "Khaki", "Cream", "Charcoal", "Peach", "Tan", "Burgundy",
+  "Salmon", "Rose", "Emerald", "Azure", "Lavender", "Mint", "Coral", "Transparent",
+  "Clear", "Multi-color", "Striped", "Patterned", "Floral", "Printed"
+];
+
+// Valid locations in Nepal
+const VALID_LOCATIONS = [
+  "Kathmandu", "Bhaktapur", "Lalitpur", "Pokhara", "Biratnagar",
+  "Janakpur", "Nepalganj", "Dharan", "Birgunj", "Butwal",
+  "Hetauda", "Simara", "Gorkha", "Dhulikhel", "Narayanghat",
+  "Malangwa", "Raxaul", "Tuladhar", "Kalaiya", "Ilam",
+  "Damak", "Itahari", "Sunsari", "Udayapur", "Okhaldi",
+  "Morang", "Makwanpur", "Nuwakot", "Sindhupalchok", "Kavre"
+];
+
+// Valid materials by cloth type
+const MATERIAL_BY_CLOTHTYPE: { [key: string]: string[] } = {
+  "t-shirt": ["Cotton", "Polyester", "Cotton Blend", "100% Cotton", "Organic Cotton", "Modal"],
+  "shirt": ["Cotton", "Linen", "Silk", "Polyester", "Cotton Blend", "Bamboo"],
+  "jacket": ["Denim", "Leather", "Wool", "Polyester", "Fleece", "Cotton", "Nylon", "Suede"],
+  "blazer": ["Wool", "Cotton", "Silk", "Linen", "Wool Blend", "Polyester"],
+  "sweater": ["Wool", "Cotton", "Acrylic", "Cashmere", "Merino", "Wool Blend", "Polyester"],
+  "hoodie": ["Cotton", "Polyester", "Cotton Blend", "Fleece", "Thermal"],
+  "pants": ["Cotton", "Denim", "Polyester", "Wool", "Linen", "Cotton Blend"],
+  "jeans": ["Denim", "Denim Blend", "Cotton Denim", "Stretch Denim"],
+  "shorts": ["Cotton", "Denim", "Polyester", "Linen", "Cotton Blend"],
+  "skirt": ["Cotton", "Silk", "Polyester", "Wool", "Linen", "Satin"],
+  "dress": ["Cotton", "Silk", "Polyester", "Wool", "Linen", "Chiffon", "Satin"],
+  "saree": ["Silk", "Cotton", "Linen", "Chiffon", "Georgette", "Crepe"],
+  "shoes": ["Leather", "Canvas", "Rubber", "Suede", "Synthetic", "Mesh", "Cloth"],
+  "boots": ["Leather", "Suede", "Rubber", "Synthetic", "Canvas"],
+  "sandals": ["Leather", "Rubber", "Synthetic", "Canvas", "Cork"],
+  "bag": ["Leather", "Canvas", "Polyester", "Nylon", "Synthetic", "Suede"],
+  "accessories": ["Leather", "Metal", "Cloth", "Plastic", "Wool", "Cotton"],
+  "other": ["Varies", "Cotton", "Polyester", "Leather", "Wool", "Silk"]
+};
+
+// Valid brands
+const VALID_BRANDS = [
+  "Nike", "Adidas", "Puma", "Reebok", "New Balance", "Converse",
+  "H&M", "Zara", "Forever 21", "Uniqlo", "Gap", "Old Navy",
+  "Gucci", "Louis Vuitton", "Prada", "Chanel", "Dior", "Versace",
+  "Calvin Klein", "Tommy Hilfiger", "Ralph Lauren", "Polo",
+  "Levis", "Wrangler", "Diesel", "Guess", "Lee",
+  "Lacoste", "Fred Perry", "Burberry", "Armani",
+  "Zuri", "Daraz", "Sajilo", "Local", "Domestic", "Custom",
+  "Sunglass Hut", "Ray-Ban", "Oakley", "Coach", "Michael Kors",
+  "C&A", "Mango", "COS", "Topshop", "ASOS"
+];
+
+// Clothing size suggestions by cloth type
+const SIZE_BY_CLOTHTYPE: { [key: string]: string[] } = {
+  "t-shirt": ["XS", "S", "M", "L", "XL", "XXL"],
+  "shirt": ["XS", "S", "M", "L", "XL", "XXL"],
+  "jacket": ["XS", "S", "M", "L", "XL", "XXL"],
+  "blazer": ["XS", "S", "M", "L", "XL", "XXL"],
+  "sweater": ["XS", "S", "M", "L", "XL", "XXL"],
+  "hoodie": ["XS", "S", "M", "L", "XL", "XXL"],
+  "pants": ["XS", "S", "M", "L", "XL", "XXL"],
+  "jeans": ["XS", "S", "M", "L", "XL", "XXL"],
+  "shorts": ["XS", "S", "M", "L", "XL", "XXL"],
+  "skirt": ["XS", "S", "M", "L", "XL", "XXL"],
+  "dress": ["XS", "S", "M", "L", "XL", "XXL"],
+  "saree": ["One Size", "Free Size"],
+  "shoes": ["6", "7", "8", "9", "10", "11", "12"],
+  "boots": ["6", "7", "8", "9", "10", "11", "12"],
+  "sandals": ["6", "7", "8", "9", "10", "11", "12"],
+  "bag": ["One Size"],
+  "accessories": ["One Size"],
+  "other": ["One Size", "XS", "S", "M", "L", "XL", "XXL"]
+};
+
+// Validate color - accept valid color names (case insensitive) or valid hex colors
+const isValidColor = (color: string): boolean => {
+  if (!color.trim()) return true; // empty is allowed
+  
+  const trimmed = color.trim();
+  
+  // Check if it's a valid color name (case insensitive)
+  if (VALID_COLORS.some(c => c.toLowerCase() === trimmed.toLowerCase())) {
+    return true;
+  }
+  
+  // Check if it's a valid hex color (#RGB, #RRGGBB, #RRGGBBAA)
+  if (/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3}|[A-Fa-f0-9]{8})$/.test(trimmed)) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Validate material based on cloth type
+const isValidMaterial = (material: string, clothType: string): boolean => {
+  if (!material.trim()) return true; // empty is allowed
+  
+  const validMaterials = MATERIAL_BY_CLOTHTYPE[clothType] || [];
+  return validMaterials.some(m => m.toLowerCase() === material.trim().toLowerCase());
+};
+
+// Validate brand
+const isValidBrand = (brand: string): boolean => {
+  if (!brand.trim()) return true; // empty is allowed
+  
+  return VALID_BRANDS.some(b => b.toLowerCase() === brand.trim().toLowerCase());
+};
+
+// Get suitable sizes for cloth type
+const getSuitableSizes = (clothType: string): string[] => {
+  return SIZE_BY_CLOTHTYPE[clothType] || ["One Size"];
+};
+
 export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
   product,
   open,
@@ -50,6 +166,37 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
     location: product.location,
   });
   const [loading, setLoading] = useState(false);
+  const [colorError, setColorError] = useState("");
+  const [materialError, setMaterialError] = useState("");
+  const [brandError, setBrandError] = useState("");
+
+  const handleColorChange = (value: string) => {
+    setFormData({ ...formData, color: value });
+    if (value.trim() && !isValidColor(value)) {
+      setColorError(`"${value}" is not a valid color. Please use a color name (e.g., Blue, Red) or hex code (e.g., #FF5733)`);
+    } else {
+      setColorError("");
+    }
+  };
+
+  const handleMaterialChange = (value: string) => {
+    setFormData({ ...formData, material: value });
+    if (value.trim() && !isValidMaterial(value, formData.clothType)) {
+      const suggested = MATERIAL_BY_CLOTHTYPE[formData.clothType] || [];
+      setMaterialError(`"${value}" is invalid for ${formData.clothType}. Suggested: ${suggested.join(", ")}`);
+    } else {
+      setMaterialError("");
+    }
+  };
+
+  const handleBrandChange = (value: string) => {
+    setFormData({ ...formData, brand: value });
+    if (value.trim() && !isValidBrand(value)) {
+      setBrandError(`"${value}" is not a recognized brand. Examples: Nike, Adidas, H&M, Zara`);
+    } else {
+      setBrandError("");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +224,37 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
       toast({
         title: "Error",
         description: "Location is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate color
+    if (formData.color.trim() && !isValidColor(formData.color)) {
+      toast({
+        title: "Error",
+        description: `"${formData.color}" is not a valid color. Please use a color name or hex code.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate material
+    if (formData.material.trim() && !isValidMaterial(formData.material, formData.clothType)) {
+      const suggested = MATERIAL_BY_CLOTHTYPE[formData.clothType] || [];
+      toast({
+        title: "Error",
+        description: `"${formData.material}" is invalid for ${formData.clothType}. Suggested: ${suggested.join(", ")}`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate brand
+    if (formData.brand.trim() && !isValidBrand(formData.brand)) {
+      toast({
+        title: "Error",
+        description: `"${formData.brand}" is not a recognized brand. Examples: Nike, Adidas, H&M, Zara`,
         variant: "destructive"
       });
       return;
@@ -176,20 +354,11 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                     <SelectValue placeholder="Select size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="XS">XS</SelectItem>
-                    <SelectItem value="S">S</SelectItem>
-                    <SelectItem value="M">M</SelectItem>
-                    <SelectItem value="L">L</SelectItem>
-                    <SelectItem value="XL">XL</SelectItem>
-                    <SelectItem value="XXL">XXL</SelectItem>
-                    <SelectItem value="One Size">One Size</SelectItem>
-                    <SelectItem value="6">6</SelectItem>
-                    <SelectItem value="7">7</SelectItem>
-                    <SelectItem value="8">8</SelectItem>
-                    <SelectItem value="9">9</SelectItem>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="11">11</SelectItem>
-                    <SelectItem value="12">12</SelectItem>
+                    {getSuitableSizes(formData.clothType).map((size) => (
+                      <SelectItem key={size} value={size}>
+                        {size}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -271,14 +440,22 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
 
               <div className="grid gap-2">
                 <Label htmlFor="location">Location *</Label>
-                <Input
-                  id="location"
+                <Select
                   value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                  required
-                />
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, location: value })
+                  }>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VALID_LOCATIONS.map((loc) => (
+                      <SelectItem key={loc} value={loc}>
+                        {loc}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -288,23 +465,34 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                 <Input
                   id="brand"
                   value={formData.brand}
-                  onChange={(e) =>
-                    setFormData({ ...formData, brand: e.target.value })
-                  }
+                  onChange={(e) => handleBrandChange(e.target.value)}
                   placeholder="e.g., Nike, H&M"
+                  className={brandError ? "border-red-500" : ""}
                 />
+                {brandError && (
+                  <p className="text-sm text-red-500">{brandError}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
                 <Label htmlFor="color">Color</Label>
-                <Input
-                  id="color"
+                <Select
                   value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                  placeholder="e.g., Blue"
-                />
+                  onValueChange={(value) => handleColorChange(value)}>
+                  <SelectTrigger className={colorError ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Select color" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VALID_COLORS.map((color) => (
+                      <SelectItem key={color} value={color}>
+                        {color}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {colorError && (
+                  <p className="text-sm text-red-500">{colorError}</p>
+                )}
               </div>
 
               <div className="grid gap-2">
@@ -312,11 +500,13 @@ export const ProductEditDialog: React.FC<ProductEditDialogProps> = ({
                 <Input
                   id="material"
                   value={formData.material}
-                  onChange={(e) =>
-                    setFormData({ ...formData, material: e.target.value })
-                  }
-                  placeholder="e.g., Cotton"
+                  onChange={(e) => handleMaterialChange(e.target.value)}
+                  placeholder={`e.g., ${(MATERIAL_BY_CLOTHTYPE[formData.clothType] || ["Cotton"])[0]}`}
+                  className={materialError ? "border-red-500" : ""}
                 />
+                {materialError && (
+                  <p className="text-sm text-red-500">{materialError}</p>
+                )}
               </div>
             </div>
           </div>

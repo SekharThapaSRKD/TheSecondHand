@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/context/ProductContext";
-import { ShieldCheck, Trash2, ArrowLeft, Package, DollarSign, Tag } from "lucide-react";
+import { ShieldCheck, Trash2, ArrowLeft, Package, Tag } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -210,6 +211,31 @@ const AdminUserDetail = () => {
   const totalRevenue = userData.stats?.totalRevenue ?? userData.totalRevenue ?? soldItems.reduce((sum, t) => sum + t.amount, 0);
   const totalSpent = userData.stats?.totalSpent ?? userData.totalSpent ?? purchasedItems.reduce((sum, t) => sum + t.amount, 0);
 
+  // Prepare monthly data for chart
+  const monthlyData: { [key: string]: { month: string; sales: number; purchases: number } } = {};
+  
+  transactions.forEach((t) => {
+    const date = new Date(t.createdAt);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthDisplay = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { month: monthDisplay, sales: 0, purchases: 0 };
+    }
+    
+    if (t.type === "sale") {
+      monthlyData[monthKey].sales += t.amount;
+    } else {
+      monthlyData[monthKey].purchases += t.amount;
+    }
+  });
+
+  const monthlyChartData = Object.values(monthlyData).sort((a, b) => {
+    const dateA = new Date(a.month);
+    const dateB = new Date(b.month);
+    return dateA.getTime() - dateB.getTime();
+  });
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -256,7 +282,6 @@ const AdminUserDetail = () => {
                   <p className="text-sm text-muted-foreground">Total Revenue</p>
                   <p className="text-xl font-bold">NRs {totalRevenue.toLocaleString()}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
@@ -268,7 +293,6 @@ const AdminUserDetail = () => {
                   <p className="text-sm text-muted-foreground">Total Spent</p>
                   <p className="text-xl font-bold">NRs {totalSpent.toLocaleString()}</p>
                 </div>
-                <DollarSign className="h-8 w-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
@@ -405,6 +429,99 @@ const AdminUserDetail = () => {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Transaction Charts Section */}
+        {transactions.length > 0 && (
+          <div className="grid gap-6 md:grid-cols-2 mb-8">
+            {/* Pie Chart - Transaction Types */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Transaction Breakdown</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center items-center h-80">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        {
+                          name: "Sales",
+                          value: soldItems.length,
+                          fill: "#10b981",
+                        },
+                        {
+                          name: "Purchases",
+                          value: purchasedItems.length,
+                          fill: "#3b82f6",
+                        },
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      <Cell fill="#10b981" />
+                      <Cell fill="#3b82f6" />
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value} transactions`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart - Revenue vs Spending */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Revenue vs Spending</CardTitle>
+              </CardHeader>
+              <CardContent className="flex justify-center items-center h-80">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      {
+                        name: "Amount",
+                        Revenue: totalRevenue,
+                        Spending: totalSpent,
+                      },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `NRs ${value?.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="Revenue" fill="#10b981" name="Revenue (Sold)" />
+                    <Bar dataKey="Spending" fill="#3b82f6" name="Spending (Purchased)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Monthly Trends Chart */}
+        {monthlyChartData.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Monthly Transaction Trends</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center h-96">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={monthlyChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `NRs ${value?.toLocaleString()}`} />
+                  <Legend />
+                  <Bar dataKey="sales" fill="#10b981" name="Sales Revenue" />
+                  <Bar dataKey="purchases" fill="#3b82f6" name="Purchase Spending" />
+                </BarChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
         )}

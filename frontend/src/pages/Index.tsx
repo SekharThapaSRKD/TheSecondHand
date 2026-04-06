@@ -11,25 +11,40 @@ const Index = () => {
   const { products, getTopSellers, getTopBuyers } = useProducts();
   const [sellers, setSellers] = useState<any[]>([]);
   const [buyers, setBuyers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     
-    Promise.all([getTopSellers(), getTopBuyers()])
+    Promise.all([
+      getTopSellers().catch(err => {
+        console.error("Failed to fetch top sellers:", err);
+        return [];
+      }),
+      getTopBuyers().catch(err => {
+        console.error("Failed to fetch top buyers:", err);
+        return [];
+      })
+    ])
       .then(([sData, bData]) => {
         if (mounted) {
-          setSellers(sData);
-          setBuyers(bData);
+          setSellers(sData || []);
+          setBuyers(bData || []);
+          setLoading(false);
         }
       })
-      .catch(() => {
-        // quiet fail
+      .catch((err) => {
+        console.error("Error fetching top users:", err);
+        if (mounted) {
+          setLoading(false);
+        }
       });
 
     return () => {
       mounted = false;
     };
-  }, [getTopSellers, getTopBuyers]);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100 dark:from-neutral-900 dark:to-neutral-950">

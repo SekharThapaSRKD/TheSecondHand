@@ -16,7 +16,6 @@ interface Filters {
   search: string;
   gender: string;
   clothType: string;
-  condition: string;
   location: string;
   minPrice: number | "";
   maxPrice: number | "";
@@ -49,7 +48,6 @@ const clothTypes = [
   { value: 'bag', label: 'Bag' },
   { value: 'accessories', label: 'Accessories' },
 ];
-const conditions = ['All', 'new-with-tags', 'like-new', 'good', 'fair', 'worn'];
 const genders = ['All', 'Men', 'Women', 'Unisex'];
 
 export const SearchFilters = ({ filters, setFilters, onClear }: SearchFiltersProps) => {
@@ -158,7 +156,7 @@ export const SearchFilters = ({ filters, setFilters, onClear }: SearchFiltersPro
             </div>
         </div>
 
-        <Accordion type="multiple" defaultValue={["clothType", "gender", "condition"]} className="w-full">
+        <Accordion type="multiple" defaultValue={["clothType", "gender"]} className="w-full">
             
             {/* Gender */}
             <AccordionItem value="gender" className="border-b-0 mb-2">
@@ -215,34 +213,6 @@ export const SearchFilters = ({ filters, setFilters, onClear }: SearchFiltersPro
                 </AccordionContent>
             </AccordionItem>
 
-             {/* Condition */}
-             <AccordionItem value="condition" className="border-b-0">
-                <AccordionTrigger className="text-sm font-medium hover:no-underline py-2 rounded-md hover:bg-muted/50 px-2 transition-colors">
-                    Condition
-                </AccordionTrigger>
-                <AccordionContent className="px-2 pt-2">
-                    <div className="space-y-2">
-                        {conditions.map((cond) => {
-                            const val = cond.toLowerCase();
-                            const display = cond === 'All' ? 'All' : cond.charAt(0).toUpperCase() + cond.slice(1);
-                            const isChecked = filters.condition === val;
-                            return (
-                                <div key={cond} className="flex items-center space-x-2 group">
-                                    <Checkbox 
-                                        id={`cond-${cond}`} 
-                                        checked={isChecked}
-                                        onCheckedChange={() => handleCheckboxChange('condition', val)}
-                                    />
-                                    <label htmlFor={`cond-${cond}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full py-1 group-hover:text-primary transition-colors">
-                                        {display}
-                                    </label>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </AccordionContent>
-            </AccordionItem>
-            
              {/* Location */}
              <AccordionItem value="location" className="border-b-0">
                 <AccordionTrigger className="text-sm font-medium hover:no-underline py-2 rounded-md hover:bg-muted/50 px-2 transition-colors">

@@ -38,15 +38,74 @@ try {
   upload = { array: () => (req, res, next) => next() };
 }
 
+// Manual sort helper for products by date (scratch logic)
+function manualSortProductsByDate(products, descending = true) {
+  for (let i = 0; i < products.length; i++) {
+    for (let j = i + 1; j < products.length; j++) {
+      const aTime = new Date(products[i].createdAt).getTime();
+      const bTime = new Date(products[j].createdAt).getTime();
+      
+      if (descending && bTime > aTime) {
+        let temp = products[i];
+        products[i] = products[j];
+        products[j] = temp;
+      } else if (!descending && bTime < aTime) {
+        let temp = products[i];
+        products[i] = products[j];
+        products[j] = temp;
+      }
+    }
+  }
+  return products;
+}
+
+// Manual sort helper for numeric values (scratch logic)
+function manualSortByNumber(array, field, descending = true) {
+  for (let i = 0; i < array.length; i++) {
+    for (let j = i + 1; j < array.length; j++) {
+      const aVal = array[i][field];
+      const bVal = array[j][field];
+      
+      if (descending && bVal > aVal) {
+        let temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      } else if (!descending && bVal < aVal) {
+        let temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+    }
+  }
+  return array;
+}
+
+// Manual sort helper for strings (scratch logic)
+function manualSortStrings(array) {
+  for (let i = 0; i < array.length; i++) {
+    for (let j = i + 1; j < array.length; j++) {
+      if (array[j].localeCompare(array[i]) < 0) {
+        let temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+    }
+  }
+  return array;
+}
+
 // Get specific routes BEFORE /:id to avoid collision
 router.get("/pending", async (req, res) => {
   try {
     console.log("Fetching pending products");
     // return newest pending items first so admins review recent uploads first
     const products = await Product.find({ status: "pending" })
-      .sort({ createdAt: -1 })
       .populate("seller", "-password")
       .exec();
+    
+    // Manual sort by createdAt (newest first) - scratch logic
+    manualSortProductsByDate(products, true);
+    
     res.json({ products });
   } catch (err) {
     console.error(err);
@@ -61,13 +120,20 @@ router.get("/pending", async (req, res) => {
 // This prioritizes sales volume while rewarding quality sellers with good ratings
 router.get("/stats/top-sellers", async (req, res) => {
   try {
-    // Fetch users who have sold items
+    // Fetch users who have sold items (without initial sort - scratch logic will handle it)
     const sellers = await User.find({ totalSales: { $gt: 0 } })
       .select("-password")
-      .lean();
+      .lean()
+      .limit(100);  // Fetch more to ensure we get top sellers after recalculation
+
+    if (!sellers || sellers.length === 0) {
+      console.log("No top sellers found");
+      return res.json({ sellers: [] });
+    }
 
     // Calculate weighted score
-    sellers.forEach((s) => {
+    for (let i = 0; i < sellers.length; i++) {
+      const s = sellers[i];
       const sales = s.totalSales || 0;
       const rating = s.averageRating || 0;
       const reviews = s.reviewCount || 0;
@@ -77,14 +143,30 @@ router.get("/stats/top-sellers", async (req, res) => {
       // - 20% weight on rating quality (rating * review count for credibility)
       // - 10% weight on review count (engagement)
       s.score = (sales * 0.7) + (rating * reviews * 0.2) + (reviews * 0.1);
-    });
+    }
 
-    sellers.sort((a, b) => b.score - a.score);
+    // Manual bubble sort by score (highest first) - scratch logic (NO .sort() method)
+    for (let i = 0; i < sellers.length; i++) {
+      for (let j = i + 1; j < sellers.length; j++) {
+        if (sellers[j].score > sellers[i].score) {
+          let temp = sellers[i];
+          sellers[i] = sellers[j];
+          sellers[j] = temp;
+        }
+      }
+    }
 
-    res.json({ sellers: sellers.slice(0, 5) });
+    // Get top 5 sellers
+    const topSellers = [];
+    for (let i = 0; i < 5 && i < sellers.length; i++) {
+      topSellers.push(sellers[i]);
+    }
+    
+    console.log(`Returning ${topSellers.length} top sellers`);
+    res.json({ sellers: topSellers });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching top sellers:", err);
+    res.status(500).json({ message: "Server error", sellers: [] });
   }
 });
 
@@ -92,14 +174,37 @@ router.get("/stats/top-sellers", async (req, res) => {
 router.get("/stats/top-buyers", async (req, res) => {
   try {
     const buyers = await User.find({ totalPurchases: { $gt: 0 } })
-      .sort({ totalPurchases: -1 })
-      .limit(5)
       .select("-password")
+      .lean()
       .exec();
-    res.json({ buyers });
+
+    if (!buyers || buyers.length === 0) {
+      console.log("No top buyers found");
+      return res.json({ buyers: [] });
+    }
+
+    // Manual bubble sort by totalPurchases (highest first) - scratch logic (NO .sort() method)
+    for (let i = 0; i < buyers.length; i++) {
+      for (let j = i + 1; j < buyers.length; j++) {
+        if (buyers[j].totalPurchases > buyers[i].totalPurchases) {
+          let temp = buyers[i];
+          buyers[i] = buyers[j];
+          buyers[j] = temp;
+        }
+      }
+    }
+
+    // Get top 5 buyers
+    const topBuyers = [];
+    for (let i = 0; i < 5 && i < buyers.length; i++) {
+      topBuyers.push(buyers[i]);
+    }
+
+    console.log(`Returning ${topBuyers.length} top buyers`);
+    res.json({ buyers: topBuyers });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("Error fetching top buyers:", err);
+    res.status(500).json({ message: "Server error", buyers: [] });
   }
 });
 
@@ -110,7 +215,19 @@ router.get("/stats/locations", async (req, res) => {
       status: "approved",
       location: { $ne: "" } // Exclude empty locations
     });
-    res.json({ locations: locations.sort() });
+    
+    // Manual bubble sort for strings (scratch logic - NO .sort() method)
+    for (let i = 0; i < locations.length; i++) {
+      for (let j = i + 1; j < locations.length; j++) {
+        if (locations[j].localeCompare(locations[i]) < 0) {
+          let temp = locations[i];
+          locations[i] = locations[j];
+          locations[j] = temp;
+        }
+      }
+    }
+    
+    res.json({ locations });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -151,8 +268,21 @@ router.get("/:id/reviews", async (req, res) => {
   try {
     const reviews = await Review.find({ product: req.params.id })
       .populate("reviewer", "name email")
-      .sort({ createdAt: -1 })
       .exec();
+    
+    // Manual bubble sort by createdAt (newest first) - scratch logic (NO .sort() method)
+    for (let i = 0; i < reviews.length; i++) {
+      for (let j = i + 1; j < reviews.length; j++) {
+        const aTime = new Date(reviews[i].createdAt).getTime();
+        const bTime = new Date(reviews[j].createdAt).getTime();
+        if (bTime > aTime) {
+          let temp = reviews[i];
+          reviews[i] = reviews[j];
+          reviews[j] = temp;
+        }
+      }
+    }
+    
     res.json({ reviews });
   } catch (err) {
     console.error(err);

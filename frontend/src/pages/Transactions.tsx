@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Download, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 interface Transaction {
   _id: string;
@@ -21,12 +22,12 @@ interface Transaction {
     _id: string;
     name: string;
     email: string;
-  };
+  } | string;
   buyer?: {
     _id: string;
     name: string;
     email: string;
-  };
+  } | string;
   amount: number;
   paymentMethod: string;
   paymentStatus: string;
@@ -83,6 +84,7 @@ export default function Transactions() {
       });
       if (salesRes.ok) {
         const salesData = await salesRes.json();
+        console.log("Sales transactions:", salesData);
         setSalesStats(salesData);
       }
 
@@ -135,6 +137,45 @@ export default function Transactions() {
 
   const sales = salesStats?.transactions || [];
   const purchases = purchaseStats?.transactions || [];
+
+  // Prepare chart data
+  const transactionTypeData = [
+    {
+      name: "Sales",
+      value: salesStats?.totalSales || 0,
+      fill: "#10b981",
+    },
+    {
+      name: "Purchases",
+      value: purchaseStats?.totalPurchases || 0,
+      fill: "#3b82f6",
+    },
+  ];
+
+  // Monthly transaction data
+  const monthlyData: { [key: string]: { month: string; sales: number; purchases: number } } = {};
+  
+  allTransactions.forEach((t) => {
+    const date = new Date(t.createdAt);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const monthDisplay = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    
+    if (!monthlyData[monthKey]) {
+      monthlyData[monthKey] = { month: monthDisplay, sales: 0, purchases: 0 };
+    }
+    
+    if (t.type === "sale") {
+      monthlyData[monthKey].sales += t.amount;
+    } else {
+      monthlyData[monthKey].purchases += t.amount;
+    }
+  });
+
+  const monthlyChartData = Object.values(monthlyData).sort((a, b) => {
+    const dateA = new Date(a.month);
+    const dateB = new Date(b.month);
+    return dateA.getTime() - dateB.getTime();
+  }).slice(-6); // Last 6 months
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -206,6 +247,95 @@ export default function Transactions() {
           </Card>
         </div>
 
+        {/* Charts Section */}
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
+          {/* Pie Chart - Transaction Types */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Transaction Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center h-80">
+              {transactionTypeData[0].value === 0 && transactionTypeData[1].value === 0 ? (
+                <p className="text-muted-foreground">No transaction data yet</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={transactionTypeData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {transactionTypeData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => value.toString()} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Bar Chart - Amount Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Revenue vs Spending</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center h-80">
+              {!salesStats?.totalRevenue && !purchaseStats?.totalSpent ? (
+                <p className="text-muted-foreground">No revenue/spending data yet</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={[
+                      {
+                        name: "Transaction",
+                        Revenue: salesStats?.totalRevenue || 0,
+                        Spending: purchaseStats?.totalSpent || 0,
+                      },
+                    ]}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `Rs ${value?.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="Revenue" fill="#10b981" name="Revenue (Sold)" />
+                    <Bar dataKey="Spending" fill="#3b82f6" name="Spending (Purchased)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Monthly Trends Chart */}
+        {monthlyChartData.length > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Monthly Transaction Trends</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center items-center h-96">
+              <ResponsiveContainer width="100%" height={350}>
+                <BarChart data={monthlyChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => `Rs ${value?.toLocaleString()}`} />
+                  <Legend />
+                  <Bar dataKey="sales" fill="#10b981" name="Sales Revenue" />
+                  <Bar dataKey="purchases" fill="#3b82f6" name="Purchase Spending" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Transactions Tabs */}
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -241,7 +371,12 @@ export default function Transactions() {
                   </Button>
                 </div>
                 <div className="space-y-4">
-                  {allTransactions.map((transaction) => (
+                  {allTransactions.map((transaction) => {
+                    const isUserSeller = transaction.seller?._id === user?.id;
+                    const displayName = isUserSeller ? transaction.buyer?.name : transaction.seller?.name;
+                    const transactionLabel = isUserSeller ? "Sold to" : "Bought from";
+                    
+                    return (
                     <Card key={transaction._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -254,9 +389,7 @@ export default function Transactions() {
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg">{transaction.product.name}</h3>
                               <p className="text-sm text-muted-foreground">
-                                {transaction.type === "sale"
-                                  ? `Sold to: ${transaction.buyer?.name}`
-                                  : `Bought from: ${transaction.seller?.name}`}
+                                {transactionLabel}: <strong>{displayName}</strong>
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 {new Date(transaction.createdAt).toLocaleDateString()} -{" "}
@@ -266,14 +399,15 @@ export default function Transactions() {
                           </div>
 
                           <div className="text-right">
-                            <p className={`text-lg font-bold ${transaction.type === "sale" ? "text-green-600" : "text-blue-600"}`}>
-                              {transaction.type === "sale" ? "+" : "-"} Rs {transaction.amount.toLocaleString()}
+                            <p className={`text-lg font-bold ${isUserSeller ? "text-green-600" : "text-blue-600"}`}>
+                              {isUserSeller ? "+" : "-"} Rs {transaction.amount.toLocaleString()}
                             </p>
                           </div>
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -303,7 +437,9 @@ export default function Transactions() {
                   </Button>
                 </div>
                 <div className="space-y-4">
-                  {sales.map((transaction) => (
+                  {sales.map((transaction) => {
+                    const buyerName = typeof transaction.buyer === 'object' ? transaction.buyer?.name : 'Unknown Buyer';
+                    return (
                     <Card key={transaction._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -316,7 +452,7 @@ export default function Transactions() {
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg">{transaction.product.name}</h3>
                               <p className="text-sm text-muted-foreground">
-                                Sold to: <strong>{transaction.buyer?.name}</strong>
+                                Sold to: <strong>{buyerName}</strong>
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 {new Date(transaction.createdAt).toLocaleDateString()}
@@ -332,7 +468,8 @@ export default function Transactions() {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -362,7 +499,9 @@ export default function Transactions() {
                   </Button>
                 </div>
                 <div className="space-y-4">
-                  {purchases.map((transaction) => (
+                  {purchases.map((transaction) => {
+                    const sellerName = typeof transaction.seller === 'object' ? transaction.seller?.name : 'Unknown Seller';
+                    return (
                     <Card key={transaction._id} className="overflow-hidden hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -375,7 +514,7 @@ export default function Transactions() {
                             <div className="flex-1">
                               <h3 className="font-semibold text-lg">{transaction.product.name}</h3>
                               <p className="text-sm text-muted-foreground">
-                                Bought from: <strong>{transaction.seller?.name}</strong>
+                                Bought from: <strong>{sellerName}</strong>
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
                                 {new Date(transaction.createdAt).toLocaleDateString()}
@@ -391,7 +530,8 @@ export default function Transactions() {
                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}

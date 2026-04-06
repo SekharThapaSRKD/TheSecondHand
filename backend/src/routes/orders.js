@@ -109,9 +109,9 @@ router.post("/", authMiddleware, async (req, res) => {
       try {
         const product = soldProducts.find(p => p._id.toString() === item.product.toString());
         if (product && product.seller) {
-          // Create transaction record
+          // Create transaction record (always "sale" - signifies a product was sold)
           await Transaction.create({
-            type: "purchase", // from buyer's perspective
+            type: "sale", // Product was sold
             product: item.product,
             seller: product.seller,
             buyer: req.user.id,

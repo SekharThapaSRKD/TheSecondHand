@@ -80,6 +80,36 @@ const materials = [
   "Other",
 ];
 
+const colors = [
+  "Black", "White", "Red", "Blue", "Green", "Yellow", "Orange", "Purple",
+  "Pink", "Brown", "Gray", "Grey", "Beige", "Navy", "Turquoise", "Cyan",
+  "Magenta", "Lime", "Olive", "Maroon", "Teal", "Indigo", "Violet", "Gold",
+  "Silver", "Coral", "Khaki", "Cream", "Charcoal", "Peach", "Tan", "Burgundy",
+  "Salmon", "Rose", "Emerald", "Azure", "Lavender", "Mint", "Coral", "Transparent",
+  "Clear", "Multi-color", "Striped", "Patterned", "Floral", "Printed"
+];
+
+const locations = [
+  "Kathmandu", "Bhaktapur", "Lalitpur", "Pokhara", "Biratnagar",
+  "Janakpur", "Nepalganj", "Dharan", "Birgunj", "Butwal",
+  "Hetauda", "Simara", "Gorkha", "Dhulikhel", "Narayanghat",
+  "Malangwa", "Raxaul", "Tuladhar", "Kalaiya", "Ilam",
+  "Damak", "Itahari", "Sunsari", "Udayapur", "Okhaldi",
+  "Morang", "Makwanpur", "Nuwakot", "Sindhupalchok", "Kavre"
+];
+
+const brands = [
+  "Nike", "Adidas", "Puma", "Reebok", "New Balance", "Converse",
+  "H&M", "Zara", "Forever 21", "Uniqlo", "Gap", "Old Navy",
+  "Gucci", "Louis Vuitton", "Prada", "Chanel", "Dior", "Versace",
+  "Calvin Klein", "Tommy Hilfiger", "Ralph Lauren", "Polo",
+  "Levis", "Wrangler", "Diesel", "Guess", "Lee",
+  "Lacoste", "Fred Perry", "Burberry", "Armani",
+  "Zuri", "Daraz", "Sajilo", "Local", "Domestic", "Custom",
+  "Sunglass Hut", "Ray-Ban", "Oakley", "Coach", "Michael Kors",
+  "C&A", "Mango", "COS", "Topshop", "ASOS"
+];
+
 const Sell = () => {
   const { user, isAuthenticated } = useAuth();
   const { addProduct } = useProducts();
@@ -309,26 +339,42 @@ const Sell = () => {
 
                 <div>
                   <Label htmlFor="brand">Brand</Label>
-                  <Input
-                    id="brand"
-                    placeholder="e.g., Nike, H&M"
+                  <Select
                     value={formData.brand}
-                    onChange={(e) =>
-                      setFormData({ ...formData, brand: e.target.value })
-                    }
-                  />
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, brand: v })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {brands.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <Label htmlFor="color">Color</Label>
-                  <Input
-                    id="color"
-                    placeholder="e.g., Blue, Black"
+                  <Select
                     value={formData.color}
-                    onChange={(e) =>
-                      setFormData({ ...formData, color: e.target.value })
-                    }
-                  />
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, color: v })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select color" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {colors.map((color) => (
+                        <SelectItem key={color} value={color}>
+                          {color}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -393,15 +439,22 @@ const Sell = () => {
 
                 <div>
                   <Label htmlFor="location">Location *</Label>
-                  <Input
-                    id="location"
-                    placeholder="e.g., Butwal"
+                  <Select
                     value={formData.location}
-                    onChange={(e) =>
-                      setFormData({ ...formData, location: e.target.value })
-                    }
-                    required
-                  />
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, location: v })
+                    }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
